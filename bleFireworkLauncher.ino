@@ -1,4 +1,5 @@
 //Bluetooth firework launcher code
+//Universal version
 char inSerial[15];
 const long  heatTime = 5000;
 const byte MOSFET_1 = 5;
