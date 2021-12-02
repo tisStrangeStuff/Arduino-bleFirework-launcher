@@ -1,0 +1,91 @@
+#include <avr/io.h>
+//Only use with Atmega328p
+//If used with diffrent micro-controller it will NOT work.
+//This is due to a couple lines of port munipulatin I used
+
+char current_command[32];
+char rc; //Recving char
+bool reciveInProgress = false;
+
+//Vars for waiting, proably a better way to do this.
+unsigned long wait1;
+unsigned long wait2;
+unsigned long wait3;
+
+unsigned long currentRunTime; //Pretty self explantory
+void setup() {
+  DDRD = B00111000; //sets pins 3, 4, and 5 to output pins.
+  Serial.begin(115600);
+
+
+}
+
+void loop() {
+  currentRunTime = millis();
+  static byte ndx = 0; //Just the incrementing varible, not sure why I named it this.
+
+  while (Serial.available() > 0) {
+
+    rc = Serial.read();
+
+    //Works with starting and ending chars the start char is '<' and the ending is '>'.
+    if (reciveInProgress) {
+      if (rc != '>') {
+        current_command[ndx] = rc;
+        ndx++;
+
+      } else {
+        current_command[ndx] = '\0';
+        mosOn();
+        ndx = 0;
+        reciveInProgress = 0;
+
+      }
+
+    } else if (rc == '<') {
+      reciveInProgress = 1;
+
+
+    }
+  }
+  mosOff();
+
+}
+
+void mosOn() {
+
+  if (strcmp(current_command, "fire1") == 0) {
+    PORTD |= B00001000; //Sets pin 1 to high without changing the state of the other pins.
+    wait1 = currentRunTime; //Sets wait time to current run time, doesn't make a ton of sense until you get to the math.
+
+  }
+
+  if (strcmp(current_command, "fire2") == 0) {
+    PORTD |= B00010000; //Sets pin 2 to high without changing the state of the other pins.
+    wait2 = currentRunTime;
+  }
+
+  if (strcmp(current_command, "fire3") == 0) {
+    PORTD |= B00100000; //Sets pin 3 to high without changing the state of the other pins.
+    wait3 = currentRunTime;
+
+  }
+
+}
+
+void mosOff() { //Checks how long the mosfet has been of, if its been 5 seconds, it turns off.
+  if (currentRunTime - wait1 == 5000) {
+    PORTD &= B00001000; //Turns off 1.
+
+  }
+
+  if (currentRunTime - wait2 == 5000) {
+    PORTD &= B00010000; //Turns off 2.
+
+  }
+
+  if (currentRunTime - wait2 == 5000) {
+    PORTD &= B00100000; //Turns off 3.
+
+  }
+}
